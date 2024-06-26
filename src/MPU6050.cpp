@@ -3376,7 +3376,7 @@ bool MPU6050::writeMemoryBlock(const uint8_t *data, uint16_t dataSize, uint8_t b
                 printf("\nReceived:");
                 for (uint8_t j = 0; j < chunkSize; j++)
                 {
-                    printf("%#04x", verifyBuffer[i + j]);
+                    printf("%#04x", verifyBuffer[j]);
                 }
                 printf("\n");
                 // free(verifyBuffer);
@@ -3459,7 +3459,7 @@ bool MPU6050::writeDMPConfigurationSet(const uint8_t *data, uint16_t dataSize, b
             {
                 progBuffer = (uint8_t *)data + i;
             }
-            success = writeMemoryBlock(progBuffer, length, bank, offset, true);
+            success = writeMemoryBlock(progBuffer, length, bank, offset, false);
             i += length;
         }
         else
