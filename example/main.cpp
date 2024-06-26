@@ -47,7 +47,7 @@ extern "C" void update_mpu(void *pvParameters)
 			// reset so we can continue cleanly
 			mpu.resetFIFO();
 		}
-		else if (mpuIntStatus & 0x02)
+		else if (mpuIntStatus & 0x01) // 0-th bit is DATA_RDY_INT flag
 		{
 			// wait for correct available data length, should be a VERY short wait
 			while (fifoCount < packetSize)
@@ -57,13 +57,14 @@ extern "C" void update_mpu(void *pvParameters)
 
 			// read a packet from FIFO
 			mpu.getFIFOBytes(fifoBuffer, packetSize);
-
+			mpu.resetFIFO(); // if somehow FIFO have unread data, lets loose it... On the next DATA_RDY_INT event if would contaion only fresh DMP result
 			// read and calculate data
 			mpu.dmpGetQuaternion(&quaternion, fifoBuffer);
 			mpu.dmpGetGravity(&gravity, &quaternion);
 			mpu.dmpGetYawPitchRoll(ypr, &quaternion, &gravity);
 
 			printf("Yaw: %3.2f Pitch: %3.2f Roll: %3.2f\n", ypr[0] * 180/M_PI, ypr[1] * 180/M_PI, ypr[2] * 180/M_PI);
+			mpu.resetFIFO(); // 
 		}
 	}
 }
@@ -74,7 +75,7 @@ void start(void)
 	i2c.initialize(PIN_I2C_SDA, PIN_I2C_SCL, 400000);
 	mpu.initialize(&i2c, MPU6050_DEFAULT_ADDRESS);
 
-	xTaskCreate(update_mpu, "update_mpu", 2048, NULL, 2, NULL);
+	xTaskCreate(update_mpu, "update_mpu", 4096, NULL, 2, NULL); // need 4K stack size or application crushes
 }
 
 extern "C" void app_main(void)
